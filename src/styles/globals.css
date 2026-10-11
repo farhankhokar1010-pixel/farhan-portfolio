@@ -1,0 +1,239 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ───────── Design tokens ─────────
+   Light  = cool white-blue base + light-blue surfaces + orange accent, with a dotted pattern.
+   Dark   = neutral dark grey (no warm tint, no neon) + orange accent. */
+:root {
+  --bg: #f3f9fd;
+  --bg-elevated: #ffffff;
+  --surface: #dcedf9;
+  --text: #14212b;
+  --text-muted: #566877;
+  --border: rgb(20 33 43 / 0.12);
+  --accent: #ff7a1a;        /* fills, highlights */
+  --accent-strong: #e8650a; /* hover fills */
+  --accent-text: #b04607;   /* orange used as TEXT (AA on light bg) */
+  --on-accent: #1a1006;     /* text placed on orange fills */
+  --sky: #9fd3f2;           /* light-blue secondary accent */
+  --sky-strong: #5bb4e5;
+  --glass: rgb(255 255 255 / 0.66);
+  --shadow: 20 40 60;
+  --pattern-dot: rgb(91 180 229 / 0.55);
+  --pattern-glow-a: rgb(255 122 26 / 0.38);
+  --pattern-glow-b: rgb(159 211 242 / 0.70);
+  --stage-fill: rgb(159 211 242 / 0.75);
+  --stage-fill-edge: rgb(159 211 242 / 0.22);
+  --ring-glow: rgb(255 122 26 / 0.38);
+  --light-orange: rgb(255 122 26 / 0.42);
+  --light-blue: rgb(70 150 220 / 0.40);
+}
+
+.dark {
+  --bg: #1a1a1a;
+  --bg-elevated: #242424;
+  --surface: #303030;
+  --text: #ececec;
+  --text-muted: #9b9b9b;
+  --border: rgb(255 255 255 / 0.1);
+  --accent: #ff8a2b;
+  --accent-strong: #ffa04f;
+  --accent-text: #ff9a45;
+  --on-accent: #1a1a1a;
+  --sky: #6fb8e0;
+  --sky-strong: #8fcdf0;
+  --glass: rgb(36 36 36 / 0.66);
+  --shadow: 0 0 0;
+  --pattern-dot: rgb(111 184 224 / 0.30);
+  --pattern-glow-a: rgb(255 138 43 / 0.16);
+  --stage-fill: rgb(90 170 235 / 0.42);
+  --stage-fill-edge: rgb(90 170 235 / 0.07);
+  --ring-glow: rgb(255 138 43 / 0.35);
+  --light-orange: rgb(255 138 43 / 0.50);
+  --light-blue: rgb(90 170 230 / 0.45);
+  --pattern-glow-b: rgb(111 184 224 / 0.05);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-text: var(--accent-text);
+  --color-sky: var(--sky);
+  --color-sky-strong: var(--sky-strong);
+  --color-on-accent: var(--on-accent);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-soft: 0 10px 30px -12px rgb(var(--shadow) / 0.22);
+  --shadow-lift: 0 24px 60px -24px rgb(var(--shadow) / 0.35);
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  color-scheme: light;
+}
+html.dark { color-scheme: dark; }
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.4s var(--ease-cinematic), color 0.4s var(--ease-cinematic);
+}
+
+/* Environment zones: the two glows slowly change corner as you move through the page (set by EnvironmentZones). */
+@property --glow-ax { syntax: "<percentage>"; inherits: true; initial-value: 95%; }
+@property --glow-ay { syntax: "<percentage>"; inherits: true; initial-value: -5%; }
+@property --glow-bx { syntax: "<percentage>"; inherits: true; initial-value: -10%; }
+@property --glow-by { syntax: "<percentage>"; inherits: true; initial-value: 105%; }
+html {
+  transition: --glow-ax 1.6s ease, --glow-ay 1.6s ease, --glow-bx 1.6s ease, --glow-by 1.6s ease;
+}
+html[data-zone="b"] { --glow-ax: 12%; --glow-ay: -8%; --glow-bx: 108%; --glow-by: 92%; }
+html[data-zone="c"] { --glow-ax: 100%; --glow-ay: 104%; --glow-bx: 0%; --glow-by: 4%; }
+
+/* Page pattern: dotted grid + orange / light-blue glows. Fixed layer behind everything. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--pattern-dot) 1.4px, transparent 0),
+    radial-gradient(60rem 40rem at var(--glow-ax) var(--glow-ay), var(--pattern-glow-a), transparent 60%),
+    radial-gradient(55rem 45rem at var(--glow-bx) var(--glow-by), var(--pattern-glow-b), transparent 60%);
+  background-size: 24px 24px, auto, auto;
+}
+html[data-perf="reduced"] body::before {
+  background-image: radial-gradient(circle at 1px 1px, var(--pattern-dot) 1.2px, transparent 0);
+}
+
+::selection { background: var(--accent); color: var(--on-accent); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Restrained glass — navbar, AI panel, overlays only. */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+/* Navbar glass: page content stays visible, blurred, behind it. Bottom hairline only. */
+.nav-glass {
+  background: color-mix(in srgb, var(--bg) 52%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+}
+html[data-perf="reduced"] .nav-glass { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* Performance mode: drop expensive effects globally. */
+html[data-perf="reduced"] .glass {
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-perf="reduced"] * { box-shadow: none !important; }
+
+/* Reduced motion: keep content, drop the choreography. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Small uppercase mono label, e.g. "SYSTEM READY" */
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+
+/* ───────── Custom cursor (fine pointers only; class added by <CustomCursor/>) ───────── */
+html.custom-cursor, html.custom-cursor * { cursor: none !important; }
+html.custom-cursor input, html.custom-cursor textarea, html.custom-cursor [contenteditable="true"] { cursor: text !important; }
+
+.cursor-root { position: fixed; inset: 0 auto auto 0; z-index: 9999; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+.cursor-root[data-visible="true"] { opacity: 1; }
+.cursor-follow, .cursor-dot { position: absolute; left: 0; top: 0; pointer-events: none; }
+.cursor-ring { position: absolute; left: 0; top: 0; pointer-events: none; }
+.cursor-ring {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9999px;
+  border: 1.5px solid var(--accent);
+  transform: translate(-50%, -50%) scale(var(--press, 1));
+  transition: width 0.35s var(--ease-cinematic), height 0.35s var(--ease-cinematic), background-color 0.25s, transform 0.2s;
+}
+.cursor-ring[data-state="link"]   { width: 54px; height: 54px; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.cursor-ring[data-state="button"] { width: 64px; height: 64px; background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.cursor-ring[data-state="drag"]   { width: 92px; height: 92px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cursor-ring[data-pressed="true"] { --press: 0.85; }
+.cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 9999px; background: var(--accent); }
+.cursor-label { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.16em; color: var(--accent-text); font-weight: 600; }
+html[data-loading] .cursor-ring { border-style: dashed; animation: cursor-spin 1.2s linear infinite; }
+@keyframes cursor-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* Hero scroll cue */
+.scroll-line { transform-origin: top; animation: scroll-cue 1.8s var(--ease-cinematic) infinite; }
+@keyframes scroll-cue { 0% { transform: scaleY(0); } 50% { transform: scaleY(1); transform-origin: top; } 51% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+
+/* Project lightbox */
+.lb-in { animation: lb-in 0.3s var(--ease-cinematic); }
+@keyframes lb-in { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* Document Setter blueprint outline */
+.dash-anim { stroke-dasharray: 8 10; animation: dash-move 1.6s linear infinite; }
+/* Hero stage: dashed outer ring turns very slowly, the main ring breathes. Compositor-only (transform / scale). */
+@keyframes ring-spin { to { rotate: 360deg; } }
+@keyframes ring-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.014; } }
+.ring-drift { animation: ring-spin 90s linear infinite; }
+.ring-breathe { animation: ring-breathe 7s ease-in-out infinite; }
+html[data-perf="reduced"] .ring-drift, html[data-perf="reduced"] .ring-breathe { animation: none; }
+
+/* Hero moving lights: orange and blue glows orbit across the stage on different paths. */
+.hero-lights {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  /* fade out toward the stage edges so the glows never end in a hard line */
+  -webkit-mask-image: radial-gradient(ellipse closest-side at 50% 52%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse closest-side at 50% 52%, #000 55%, transparent 100%);
+}
+.hero-light { position: absolute; width: 62cqmin; height: 62cqmin; border-radius: 50%; will-change: transform; }
+.hero-light-a { left: 2%; top: 8%; background: radial-gradient(closest-side, var(--light-orange), transparent 72%); animation: light-orbit-a 13s ease-in-out infinite; }
+.hero-light-b { right: 2%; bottom: 6%; background: radial-gradient(closest-side, var(--light-blue), transparent 72%); animation: light-orbit-b 16s ease-in-out infinite; }
+@keyframes light-orbit-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  25% { transform: translate3d(70%, 12%, 0) scale(1.15); }
+  50% { transform: translate3d(80%, 65%, 0) scale(0.9); }
+  75% { transform: translate3d(12%, 55%, 0) scale(1.1); }
+}
+@keyframes light-orbit-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  25% { transform: translate3d(-75%, -18%, 0) scale(1.1); }
+  50% { transform: translate3d(-85%, -70%, 0) scale(0.92); }
+  75% { transform: translate3d(-15%, -50%, 0) scale(1.15); }
+}
+html[data-perf="reduced"] .hero-lights { display: none; }
+@media (prefers-reduced-motion: reduce) { .hero-light { animation: none; } }
+
+@keyframes dash-move { to { stroke-dashoffset: -36; } }

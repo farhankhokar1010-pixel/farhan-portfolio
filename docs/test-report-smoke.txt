@@ -1,0 +1,60 @@
+
+Smoke test: http://localhost:3600
+
+Pages
+  PASS  GET / is 200 html
+  PASS  has exactly one <h1>
+  PASS  section #top present
+  PASS  section #work present
+  PASS  section #about present
+  PASS  section #skills present
+  PASS  section #education present
+  PASS  section #resume present
+  PASS  section #certificates present
+  PASS  section #contact present
+  PASS  <title> set
+  PASS  meta description
+  PASS  canonical link
+  PASS  Open Graph image tag
+  PASS  JSON-LD Person
+  PASS  lang attribute
+  PASS  unknown route is 404
+
+SEO files and assets
+  PASS  /robots.txt
+  PASS  /sitemap.xml
+  PASS  /opengraph-image.png
+  PASS  /twitter-image.png
+  PASS  /icon.png
+  PASS  resume PDF is a real PDF
+  PASS  /models/farhan.glb is a GLB
+  PASS  /models/farhan-lite.glb is a GLB
+  PASS  certificate image act-ai
+  PASS  certificate image internship-iub
+  PASS  certificate image python-ibm
+
+Security headers
+  PASS  X-Content-Type-Options: nosniff
+  PASS  Referrer-Policy
+  PASS  X-Frame-Options / frame-ancestors
+  PASS  no X-Powered-By
+
+Chat API
+  PASS  GET /api/chat reports config (never the key)
+  PASS  POST wrong content-type → 415
+  PASS  POST empty messages → 400
+  PASS  POST last message not from user → 400
+  PASS  POST from another origin → 403
+  PASS  POST valid question → streamed answer
+  PASS  answer mentions a real project
+
+Secrets
+  SKIP  no GROQ_API_KEY found locally to look for
+
+Content
+  PASS  no PLACEHOLDER/TODO text in src/data
+  INFO  project live links not set yet (buttons say Coming soon)
+  INFO  availability not set (hidden); Fiverr not set
+
+40 passed, 0 failed
+
