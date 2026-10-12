@@ -54,7 +54,7 @@ export function PassportAIShowcase() {
   useEffect(() => {
     const el = lab.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !started.current) { started.current = true; run(); } }, { threshold: 0.35 });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !started.current) { started.current = true; run(); } }, { threshold: 0.12 }); // low on purpose: on a phone this block is ~1700px tall, so 35% would almost never be on screen
     io.observe(el);
     return () => { io.disconnect(); window.clearTimeout(timer.current); };
   }, [run]);
@@ -131,19 +131,19 @@ export function PassportAIShowcase() {
                 })}
               </ul>
 
-              <div className="flex items-end gap-4">
-                <div className="relative aspect-[311/400] w-32 shrink-0 overflow-hidden rounded-2xl border border-[color:var(--p-line)] bg-white/5 sm:w-40">
+              <div className="flex flex-col gap-3 min-[480px]:grid min-[480px]:grid-cols-[10rem_minmax(0,1fr)] min-[480px]:items-end min-[480px]:gap-4">
+                <div className="relative aspect-[311/400] w-28 overflow-hidden rounded-2xl border border-[color:var(--p-line)] bg-white/5 min-[480px]:w-full">
                   {step >= 9 ? (
                     <Image src="/images/projects/passportai/pipeline/final.webp" alt="Final passport photo with blue background" fill sizes="160px" className="lb-in scale-[1.03] object-cover" />
                   ) : (
                     <span className="absolute inset-0 grid place-items-center font-mono text-[0.6rem] opacity-40">final output</span>
                   )}
                 </div>
-                <ul className="flex flex-1 flex-col gap-1.5">
+                <ul className="flex min-w-0 flex-col gap-1.5">
                   {SIZES.map(([n, d]) => (
-                    <li key={n} className={cn("flex items-baseline justify-between gap-3 rounded-lg border border-[color:var(--p-line)] px-3 py-1.5 text-xs transition-opacity duration-500", step >= 10 ? "opacity-100" : "opacity-30")}>
+                    <li key={n} className={cn("flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 rounded-lg border border-[color:var(--p-line)] px-3 py-1.5 text-xs transition-opacity duration-500", step >= 10 ? "opacity-100" : "opacity-30")}>
                       <span className="font-medium">{n}</span>
-                      <span className="font-mono opacity-70">{d}</span>
+                      <span className="font-mono text-[0.68rem] leading-snug opacity-70 sm:text-xs">{d}</span>
                     </li>
                   ))}
                 </ul>

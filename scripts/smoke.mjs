@@ -43,11 +43,17 @@ for (const [p, type] of [["/robots.txt", "text/plain"], ["/sitemap.xml", "xml"],
 const pdf = await get("/Muhammad_Farhan_Resume.pdf");
 const pdfHead = Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString();
 check("resume PDF is a real PDF", pdf.status === 200 && pdfHead === "%PDF-");
-for (const m of ["/models/farhan.glb", "/models/farhan-lite.glb"]) {
+for (const [m, maxKB] of [["/models/farhan.glb", 2500], ["/models/farhan-mobile.glb", 700]]) {
   const r = await get(m);
-  const magic = Buffer.from(await r.arrayBuffer()).subarray(0, 4).toString();
-  check(`${m} is a GLB`, r.status === 200 && magic === "glTF", `status ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  check(`${m} is a GLB`, r.status === 200 && buf.subarray(0, 4).toString() === "glTF", `status ${r.status}`);
+  check(`${m} is under ${maxKB} KB (slow-network budget)`, buf.length / 1024 < maxKB, `${Math.round(buf.length / 1024)} KB`);
 }
+const poster = await get("/images/farhan-poster.webp");
+check("hero poster is tiny (< 40 KB)", poster.status === 200 && Buffer.from(await poster.arrayBuffer()).length < 40 * 1024);
+check("no /_next/image requests (images served straight from the CDN)", !html.includes("/_next/image"));
+check("no 3D model preload competing with the page", !/rel="preload"[^>]*\.glb/.test(html));
+check("page can reveal itself without JavaScript (loader give-up CSS)", /loader-giveup/.test(await (await get(html.match(/\/_next\/static\/[^"]+\.css/)[0])).text()));
 for (const f of ["act-ai", "internship-iub", "python-ibm"]) {
   const r = await get(`/images/certificates/${f}.webp`);
   check(`certificate image ${f}`, r.status === 200 && (r.headers.get("content-type") || "").includes("webp"));

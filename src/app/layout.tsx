@@ -62,8 +62,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
         {/* Start downloading the right GLB immediately (matches the desktop / mobile choice in Scene). */}
-        <link rel="preload" href="/models/farhan.glb" as="fetch" crossOrigin="anonymous" media="(min-width: 768px)" />
-        <link rel="preload" href="/models/farhan-lite.glb" as="fetch" crossOrigin="anonymous" media="(max-width: 767px)" />
       </head>
       <body className="min-h-dvh text-ink antialiased">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c") }} />

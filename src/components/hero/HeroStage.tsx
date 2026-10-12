@@ -1,13 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StageBoundary } from "@/three/loaders/StageBoundary";
-import { PhotoFallback } from "@/three/loaders/PhotoFallback";
-import { loadStore } from "@/lib/loadStore";
+import { HeroPoster } from "./HeroPoster";
+import { loadStore, useLoadState } from "@/lib/loadStore";
+import { usePerformanceMode } from "@/hooks/usePerformanceMode";
+import { isVerySlowConnection, shouldUseMobileModel } from "@/lib/device";
+import { MODEL_BYTES, MODEL_MOBILE_URL, MODEL_URL } from "@/three/config";
 
-// three.js stays out of the initial JS bundle.
-const Scene = dynamic(() => import("@/three/Scene"), { ssr: false });
+// three.js stays out of the initial JS bundle, and is only requested once the page is already showing.
+const loadScene = () => import("@/three/Scene");
+const Scene = dynamic(loadScene, { ssr: false });
 
 function hasWebGL(): boolean {
   try {
@@ -18,17 +22,29 @@ function hasWebGL(): boolean {
   }
 }
 
-/** 3D stage with: WebGL check, error boundary, off-screen pausing and a photo fallback. */
+type Phase = "checking" | "nowebgl" | "waiting" | "manual" | "loading" | "ready" | "failed";
+const mb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`;
+
+/**
+ * Hero stage. The page never waits for 3D: the photo shows first, then — after the page is up — the model downloads in the
+ * background (small file on phones / slow links), is drawn once off-screen to warm up the GPU, and only then fades in over the photo.
+ */
 export function HeroStage({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [webgl, setWebgl] = useState<"checking" | "yes" | "no">("checking");
+  const { ready, sceneVisible } = useLoadState();
+  const { isReduced } = usePerformanceMode();
+  const [phase, setPhase] = useState<Phase>("checking");
+  const [progress, setProgress] = useState(0);
+  const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [size, setSize] = useState("");
+  const [reason, setReason] = useState("");
+  const started = useRef(false);
+  const abort = useRef<AbortController | null>(null);
+  const blobUrl = useRef<string | null>(null);
 
-  useEffect(() => {
-    const ok = hasWebGL();
-    setWebgl(ok ? "yes" : "no");
-    if (!ok) loadStore.set({ modelDone: true, modelProgress: 100 }); // nothing to wait for
-  }, []);
+  useEffect(() => { setPhase(hasWebGL() ? "waiting" : "nowebgl"); }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -37,6 +53,99 @@ export function HeroStage({ className = "" }: { className?: string }) {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  const start = useCallback(async () => {
+    if (started.current) return;
+    started.current = true;
+    setPhase("loading");
+    setProgress(0);
+    const url = shouldUseMobileModel(isReduced) ? MODEL_MOBILE_URL : MODEL_URL;
+    const ctl = new AbortController();
+    abort.current = ctl;
+    try {
+      void loadScene(); // fetch the 3D code at the same time as the model
+      const res = await fetch(url, { signal: ctl.signal });
+      if (!res.ok || !res.body) throw new Error(`model ${res.status}`);
+      const total = MODEL_BYTES[url] || Number(res.headers.get("content-length")) || 1;
+      const reader = res.body.getReader();
+      const parts: BlobPart[] = [];
+      let got = 0, last = -1;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        parts.push(value as BlobPart);
+        got += value.length;
+        const pct = Math.min(99, Math.floor((got / total) * 100));
+        if (pct !== last) { last = pct; setProgress(pct); loadStore.set({ modelProgress: pct }); }
+      }
+      await loadScene();
+      const obj = URL.createObjectURL(new Blob(parts, { type: "model/gltf-binary" }));
+      blobUrl.current = obj;
+      loadStore.set({ modelProgress: 100, modelDone: true });
+      setModelUrl(obj);
+      setPhase("ready");
+    } catch (e) {
+      if (ctl.signal.aborted) return;
+      started.current = false;
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[3d] model download failed:", msg);
+      setReason(msg);
+      setPhase("failed");
+    }
+  }, [isReduced]);
+
+  // Safety nets so the 3D can never silently be missing: a start that takes too long, or a lost GPU context, shows a clear message + retry.
+  useEffect(() => {
+    if (phase !== "ready" || sceneVisible || !visible) return;
+    const t = window.setTimeout(() => {
+      if (loadStore.get().sceneVisible) return;
+      console.warn("[3d] scene did not start within 20 s");
+      setReason("the 3D view took too long to start");
+      setPhase("failed");
+    }, 20000);
+    return () => window.clearTimeout(t);
+  }, [phase, sceneVisible, visible]);
+
+  useEffect(() => {
+    const lost = () => { console.warn("[3d] graphics context lost"); loadStore.set({ sceneVisible: false }); setReason("the graphics context was lost"); setPhase("failed"); };
+    window.addEventListener("scene-lost", lost);
+    return () => window.removeEventListener("scene-lost", lost);
+  }, []);
+
+  // Once the page is showing: start the download when the browser is idle — or ask first on data-saver / 2G.
+  useEffect(() => {
+    if (phase !== "waiting" || !ready) return;
+    if (isVerySlowConnection()) {
+      setSize(mb(MODEL_BYTES[shouldUseMobileModel(isReduced) ? MODEL_MOBILE_URL : MODEL_URL]));
+      setPhase("manual");
+      return;
+    }
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => void start(), { timeout: 1500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(() => void start(), 300);
+    return () => window.clearTimeout(t);
+  }, [phase, ready, start, isReduced]);
+
+  useEffect(() => () => {
+    abort.current?.abort();
+    if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+  }, []);
+
+  const retry = () => {
+    if (blobUrl.current) { URL.revokeObjectURL(blobUrl.current); blobUrl.current = null; }
+    loadStore.set({ sceneVisible: false });
+    setAttempt((a) => a + 1);
+    setModelUrl(null);
+    setReason("");
+    started.current = false;
+    void start();
+  };
+
+  const caption =
+    phase === "nowebgl" ? "3D isn't supported on this device — showing photo" : undefined;
 
   return (
     <div ref={ref} className={`relative h-full w-full ${className}`} style={{ containerType: "size" }}>
@@ -61,13 +170,40 @@ export function HeroStage({ className = "" }: { className?: string }) {
         <span className="hero-light hero-light-a" />
         <span className="hero-light hero-light-b" />
       </div>
-      {webgl === "no" ? (
-        <PhotoFallback reason="3D isn't supported on this device — showing photo" />
-      ) : webgl === "yes" ? (
-        <StageBoundary onError={() => loadStore.set({ modelDone: true, modelProgress: 100 })} fallback={<PhotoFallback reason="3D model couldn't load — showing photo" />}>
-          <Scene active={visible} />
+
+      <HeroPoster hidden={sceneVisible} caption={caption} />
+
+      {phase === "ready" && modelUrl && (
+        <StageBoundary key={attempt} onError={(e) => { console.warn("[3d] scene error:", e.message); setReason(e.message); setPhase("failed"); }} fallback={null}>
+          <div className="absolute inset-0 transition-opacity duration-700 ease-out" style={{ opacity: sceneVisible ? 1 : 0 }}>
+            <Scene active={visible} url={modelUrl} />
+          </div>
         </StageBoundary>
-      ) : null}
+      )}
+
+      {/* Non-blocking status: the page is already usable while this runs. */}
+      {!sceneVisible && (phase === "loading" || phase === "ready") && (
+        <div role="status" className="pointer-events-none absolute inset-x-0 bottom-[5%] flex flex-col items-center gap-2">
+          <span className="label">Loading 3D character<span aria-hidden> · {phase === "ready" ? 100 : progress}%</span></span>
+          <span aria-hidden className="h-1 w-32 overflow-hidden rounded-full bg-line">
+            <span className="block h-full origin-left rounded-full bg-accent transition-transform duration-300" style={{ transform: `scaleX(${(phase === "ready" ? 100 : progress) / 100})` }} />
+          </span>
+        </div>
+      )}
+      {phase === "manual" && (
+        <div className="absolute inset-x-0 bottom-[5%] flex justify-center">
+          <button type="button" onClick={() => void start()} data-cursor="button" className="rounded-full border border-accent bg-elevated/80 px-4 py-2 text-sm font-medium backdrop-blur">
+            Load 3D character ({size})
+          </button>
+        </div>
+      )}
+      {phase === "failed" && (
+        <div className="absolute inset-x-0 bottom-[5%] flex flex-col items-center gap-2">
+          <span className="label">3D couldn&apos;t load — showing photo</span>
+          {reason && <span className="max-w-[16rem] px-4 text-center font-mono text-[0.62rem] opacity-60">{reason.slice(0, 90)}</span>}
+          <button type="button" onClick={retry} data-cursor="button" className="rounded-full border border-line px-4 py-1.5 text-sm font-medium hover:border-accent">Try again</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -132,23 +132,39 @@ html[data-perf="reduced"] body::before {
   background: var(--glass);
   border: 1px solid var(--border);
   backdrop-filter: blur(14px) saturate(1.1);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }
 
 /* Navbar glass: page content stays visible, blurred, behind it. Bottom hairline only. */
+/* Before JavaScript arrives the loader is static HTML: let its bar creep and pulse so it never looks frozen. */
+@keyframes loader-crawl { to { transform: scaleX(0.1); } }
+@keyframes loader-pulse { 50% { opacity: 0.45; } }
+/* If JavaScript still has not started after 3 s, fade the loader away and let the static page (text, photo, rings) show. */
+@keyframes loader-giveup { to { opacity: 0; visibility: hidden; } }
+html:not([data-loading]) #loader { animation: loader-giveup 0.6s ease 3s forwards; }
+html:not([data-loading]) #loader .loader-bar { animation: loader-crawl 5s ease-out forwards, loader-pulse 1.2s ease-in-out infinite; }
+
 .nav-glass {
   background: color-mix(in srgb, var(--bg) 52%, transparent);
   backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
   border-bottom: 1px solid var(--border);
 }
-html[data-perf="reduced"] .nav-glass { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html[data-perf="reduced"] .nav-glass { background: var(--bg); backdrop-filter: none; }
+
+/* NOTE: write only `backdrop-filter` (never also -webkit-): the build adds the prefix, and writing both made it emit ONLY the prefixed one, which Chrome/Android ignores → no blur.
+   Phones: the bar is frosted glass from the very first pixel (not only after scrolling), so content blurs as it slides under it. */
+@media (max-width: 767px) {
+  header nav[aria-label="Primary"] {
+    background: color-mix(in srgb, var(--bg) 46%, transparent);
+    backdrop-filter: blur(20px) saturate(1.6);
+    border-bottom: 1px solid var(--border);
+  }
+  html[data-perf="reduced"] header nav[aria-label="Primary"] { background: var(--bg); backdrop-filter: none; }
+}
 
 /* Performance mode: drop expensive effects globally. */
 html[data-perf="reduced"] .glass {
   background: var(--bg-elevated);
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 html[data-perf="reduced"] * { box-shadow: none !important; }
 

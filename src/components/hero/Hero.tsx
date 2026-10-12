@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { hideHero, playHeroIntro } from "@/animations/hero";
 import { useLoadState } from "@/lib/loadStore";
+import { ssrRevealed } from "@/lib/ssrReveal";
 import { profile } from "@/data/profile";
 import { ButtonLink } from "@/components/common/Button";
 import { Magnetic } from "@/components/common/Magnetic";
@@ -14,7 +15,10 @@ export function Hero() {
   const { ready } = useLoadState();
   const played = useRef(false);
 
-  useEffect(() => { if (root.current && !played.current) hideHero(root.current); }, []);
+  useEffect(() => {
+    if (ssrRevealed()) { played.current = true; return; } // already on screen: don't hide + replay
+    if (root.current && !played.current) hideHero(root.current);
+  }, []);
   useEffect(() => {
     if (ready && root.current && !played.current) {
       played.current = true;

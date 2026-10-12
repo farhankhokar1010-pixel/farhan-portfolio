@@ -24,7 +24,7 @@ export function ScreenFrame({
         aria-label={`Enlarge screenshot: ${screen.caption}`}
         className="block w-full"
       >
-        <Image src={screen.src} alt={screen.alt} width={screen.width} height={screen.height} sizes={sizes} priority={priority} className="h-auto w-full" />
+        <Image src={screen.src} alt={screen.alt} width={screen.width} height={screen.height} sizes={sizes} priority={priority} fetchPriority={priority ? "high" : "low"} className="h-auto w-full" />
       </button>
     </figure>
   );

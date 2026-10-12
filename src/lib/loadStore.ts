@@ -5,15 +5,17 @@ import { useSyncExternalStore } from "react";
  * 3D scene (lazy chunk) without importing three.js/drei into the main bundle.
  */
 export interface LoadState {
-  modelProgress: number; // 0–100, from the Three loading manager
-  modelDone: boolean;    // model loaded, or 3D unavailable/failed (nothing left to wait for)
+  modelProgress: number; // 0–100, download progress of the 3D model (does NOT hold up the page)
+  modelDone: boolean;    // model downloaded
   fontsDone: boolean;
-  ready: boolean;        // loader has finished → hero intro + camera dolly may start
+  posterDone: boolean;   // hero photo is on screen (this, with fonts, is all the loader waits for)
+  sceneVisible: boolean; // the 3D canvas has rendered its first frames and is fading in → camera intro starts
+  ready: boolean;        // loader has finished → hero text intro may start
   aiOpen: boolean;       // Ask Farhan panel is open
   ai: "idle" | "thinking" | "speaking"; // assistant activity → subtle character reaction
 }
 
-let state: LoadState = { modelProgress: 0, modelDone: false, fontsDone: false, ready: false, aiOpen: false, ai: "idle" };
+let state: LoadState = { modelProgress: 0, modelDone: false, fontsDone: false, posterDone: false, sceneVisible: false, ready: false, aiOpen: false, ai: "idle" };
 const listeners = new Set<() => void>();
 
 export const loadStore = {

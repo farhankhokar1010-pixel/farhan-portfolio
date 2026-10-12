@@ -1,2 +1,9 @@
-# Auto detect text files and perform LF normalization
 * text=auto
+# Never touch binary assets (3D models, images, fonts, PDF) when line endings are normalised
+*.glb binary
+*.webp binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.woff2 binary

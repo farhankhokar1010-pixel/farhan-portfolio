@@ -25,3 +25,21 @@ test("phone: contact form fields are 16px+ (no iOS zoom on focus)", async ({ pag
   expect(sizes.length).toBeGreaterThan(0);
   for (const s of sizes) expect(s).toBeGreaterThanOrEqual(16);
 });
+
+test("phone: navbar is frosted glass from the first pixel", async ({ page }) => {
+  await openHome(page);
+  const bf = await page.evaluate(() => getComputedStyle(document.querySelector("header nav")).backdropFilter);
+  expect(bf).toContain("blur");
+});
+
+test("phone 360px: PassportAI size rows are fully inside their card", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await openHome(page);
+  await reveal(page, "work");
+  const bad = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("li")].filter((l) => /dpi/.test(l.textContent) && /Thumbnail|Medium|Full|Passport/.test(l.textContent) && l.querySelectorAll("span").length === 2);
+    return { count: rows.length, clipped: rows.filter((l) => [...l.querySelectorAll("span")].some((s) => s.getBoundingClientRect().right > l.getBoundingClientRect().right + 1 || l.getBoundingClientRect().right > window.innerWidth)).length };
+  });
+  expect(bad.count).toBeGreaterThanOrEqual(4);
+  expect(bad.clipped).toBe(0);
+});

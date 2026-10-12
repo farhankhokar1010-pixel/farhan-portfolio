@@ -4,17 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion } from "@/animations/gsap";
 import { loadStore, useLoadState } from "@/lib/loadStore";
 import { profile } from "@/data/profile";
+import { ssrRevealed } from "@/lib/ssrReveal";
 
 const STAGES: Array<[number, string]> = [
-  [25, "Initializing experience"],
-  [50, "Loading personal profile"],
-  [85, "Loading 3D environment"],
-  [100, "Loading projects"],
+  [30, "Initializing experience"],
+  [60, "Loading personal profile"],
+  [95, "Preparing portfolio"],
+  [100, "Almost there"],
 ];
 
 /**
- * Progress is REAL: app init (10) + fonts (15) + 3D model download (75).
- * If everything is already cached it exits immediately — no artificial wait.
+ * Progress is REAL: app init (10) + fonts (40) + hero photo (50). The 3D model is NOT part of it — it streams in behind
+ * the finished page — so the loader is short on any connection and never leaves a blank screen. Fonts are capped at 2.5 s and the whole loader at 4.5 s, and if JavaScript itself is slow the static page is revealed by CSS after 3 s.
  */
 export function Loader() {
   const root = useRef<HTMLDivElement>(null);
@@ -27,18 +28,26 @@ export function Loader() {
 
   // App init + fonts + safety timeout.
   useEffect(() => {
+    // Slow link: the page was already revealed by CSS while JS downloaded. Finish quietly, no second intro.
+    if (ssrRevealed()) {
+      loadStore.set({ fontsDone: true, posterDone: true, ready: true });
+      setVisible(false);
+      return;
+    }
     history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     document.documentElement.style.overflow = "hidden";
     document.documentElement.dataset.loading = "true";
     document.fonts.ready.then(() => loadStore.set({ fontsDone: true }));
-    // Error / 404 pages have no 3D stage, so there is no model to wait for.
-    if (window.location.pathname !== "/") loadStore.set({ modelDone: true, modelProgress: 100 });
-    const bail = window.setTimeout(() => loadStore.set({ modelDone: true, fontsDone: true }), 20000);
-    return () => window.clearTimeout(bail);
+    // Error / 404 pages have no hero photo to wait for.
+    if (window.location.pathname !== "/") loadStore.set({ posterDone: true });
+    // Fonts may never hold the loader for long (the page swaps them in when they arrive); the hero photo gets a little longer.
+    const fontsBail = window.setTimeout(() => loadStore.set({ fontsDone: true }), 2500);
+    const bail = window.setTimeout(() => loadStore.set({ posterDone: true, fontsDone: true }), 4500);
+    return () => { window.clearTimeout(bail); window.clearTimeout(fontsBail); };
   }, []);
 
-  const target = 10 + (load.fontsDone ? 15 : 0) + (load.modelDone ? 75 : (load.modelProgress / 100) * 75);
+  const target = 10 + (load.fontsDone ? 40 : 0) + (load.posterDone ? 50 : 0);
 
   useEffect(() => {
     const tween = gsap.to(disp.current, {
@@ -50,12 +59,12 @@ export function Loader() {
         if (bar.current) bar.current.style.transform = `scaleX(${disp.current.v / 100})`;
       },
       onComplete: () => {
-        if (disp.current.v >= 99.9 && load.modelDone && load.fontsDone) finish();
+        if (disp.current.v >= 99.9 && load.posterDone && load.fontsDone) finish();
       },
     });
     return () => { tween.kill(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, load.modelDone, load.fontsDone]);
+  }, [target, load.posterDone, load.fontsDone]);
 
   function finish() {
     if (exiting.current || !root.current) return;
@@ -75,7 +84,7 @@ export function Loader() {
   }
 
   if (!visible) return null;
-  const done = shown >= 99.9 && load.modelDone && load.fontsDone;
+  const done = shown >= 99.9 && load.posterDone && load.fontsDone;
   const label = done ? "System ready" : (STAGES.find(([max]) => shown <= max) ?? STAGES[3])[1];
 
   return (
@@ -101,7 +110,7 @@ export function Loader() {
       </div>
 
       <div className="absolute inset-x-0 bottom-0 h-1.5 bg-line">
-        <div ref={bar} className="h-full origin-left bg-accent" style={{ transform: "scaleX(0)" }} />
+        <div ref={bar} className="loader-bar h-full origin-left bg-accent" style={{ transform: "scaleX(0)" }} />
       </div>
     </div>
   );

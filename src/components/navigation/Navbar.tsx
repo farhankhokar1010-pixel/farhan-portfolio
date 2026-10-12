@@ -49,7 +49,7 @@ export function Navbar({ onOpenPalette, kbdHint }: { onOpenPalette: () => void; 
 
   // Entrance after the loader exits.
   useEffect(() => {
-    if (!ready || !bar.current || prefersReducedMotion()) return;
+    if (!ready || !bar.current || prefersReducedMotion() || document.documentElement.dataset.ssrReveal === "1") return;
     gsap.fromTo(bar.current, { y: -80, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, ease: "power4.out", delay: 0.4, clearProps: "all" });
   }, [ready]);
 
@@ -88,7 +88,7 @@ export function Navbar({ onOpenPalette, kbdHint }: { onOpenPalette: () => void; 
         <nav
           aria-label="Primary"
           className={cn(
-            "mx-auto flex items-center justify-between gap-4 border-b border-transparent px-4 py-3 transition-[background-color,backdrop-filter,border-color] duration-500 sm:px-8",
+            "nav-bar mx-auto flex items-center justify-between gap-4 border-b border-transparent px-4 py-3 transition-[background-color,backdrop-filter,border-color] duration-500 sm:px-8",
             scrolled && "nav-glass",
           )}
         >

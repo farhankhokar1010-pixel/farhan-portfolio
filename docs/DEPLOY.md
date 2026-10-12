@@ -17,7 +17,7 @@
 |---|---|---|
 | `GROQ_API_KEY` | your key | Server-only. Never prefix with `NEXT_PUBLIC_`. |
 | `GROQ_MODEL` | `openai/gpt-oss-20b` | |
-| `NEXT_PUBLIC_SITE_URL` | `https://your-domain.com` | Used for canonical links, share image, sitemap. Add after you have the domain; until then Vercel's URL is used automatically. |
+| `NEXT_PUBLIC_SITE_URL` | `https://farhan-portfolio-3d.vercel.app` (the address you share) | Used for canonical links, share image, sitemap. Add after you have the domain; until then Vercel's URL is used automatically. |
 
 Tick Production + Preview. Redeploy after changing variables.
 

@@ -1,3 +1,16 @@
+# STATUS UPDATE 4 (slow-network + deployed-site fixes) — newest, read first
+- Live: https://farhan-portfolio-3d.vercel.app (also farhan-portfolio-ashy-nu.vercel.app → set `NEXT_PUBLIC_SITE_URL` to the one he shares, else canonical/OG point to the other).
+- **Page never waits for 3D now.** Loader = fonts (≤2.5 s) + 7 KB hero photo (`farhan-poster.webp`), hard cap 4.5 s. If JS itself is slow, CSS fades the SSR loader out after 3 s (`loader-giveup`) and `lib/ssrReveal.ts` stops Hero/Navbar/Loader from hiding + replaying the intro.
+- **3D is progressive** (`HeroStage.tsx`): photo first → after `ready` + idle, fetch model with progress (own `fetch` stream → blob URL) while `import("@/three/Scene")` loads → Scene draws 4 frames hidden (`FirstFrames`, sets `loadStore.sceneVisible`) → crossfade; camera intro waits for `sceneVisible`. 2G/save-data → manual "Load 3D" button. Failures show reason + Try again; 20 s watchdog; `webglcontextlost` → `scene-lost` event.
+- **Two models:** `farhan.glb` 1.8 MB (desktop, normal link) / `farhan-mobile.glb` 467 KB (≤1023px, touch, 3g/saveData, ≤4 GB RAM, perf mode). Built with gltf-transform: weld + meshopt simplify ratio 0.35 lockBorder (117k→41k tris), baseColor 1536px, normal/MR 1024px WebP q84/78, quantize + meshopt. `farhan-lite.glb` and the model `<link rel=preload>` tags are gone (they made phones download ~2.7 MB).
+- **Big CSS bug fixed:** writing both `backdrop-filter` and `-webkit-backdrop-filter` made the build emit ONLY the prefixed one → Chrome/Android had NO blur anywhere. Write only `backdrop-filter`. Phone navbar is glass from the first pixel (`header nav[aria-label=Primary]` rule in globals.css).
+- Images: `images.unoptimized = true` (all are small WebP in /public; optimiser asked for 3840px versions). Below-fold screenshots `fetchPriority=low`.
+- PassportAI: size rows stack under the photo <480px; pipeline replay now starts at 12% visibility (35% was unreachable on phones).
+- Tests: smoke now 46 checks; 5 new browser regression tests (slow JS reveal, glass blur, static images, phone glass, 360px sizes).
+- Not verifiable here: real GPU/phone speed; why the model was missing on his phone before (most likely 1.8 MB + 0.9 MB preload at ~27 KB/s) — the new failure message will say if it still fails.
+
+---
+
 # STATUS UPDATE 3 (Phases 14–16) — newest, read first
 - **Done:** 1–16 + Education. Remaining is on Farhan: real-phone/real-GPU check, add Fiverr/availability/project links, deploy via `docs/DEPLOY.md`.
 - **14 Testing:** `scripts/smoke.mjs` (no deps; 40 checks: pages, SEO files, assets, headers, chat API guards, secret-leak scan, placeholder scan) and `tests/e2e/*.spec.mjs` + `playwright.config.mjs` (16 browser tests; opt-in: `npm i -D @playwright/test`, `npx playwright install chromium`). Tests are `.mjs` on purpose so `next build` never type-checks them. Test helper note: the loader sets `data-loading` in an effect, so wait for it to appear THEN disappear (`waitForLoader`).

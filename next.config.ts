@@ -17,7 +17,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
   experimental: { optimizePackageImports: ["@react-three/drei"] },
-  images: { formats: ["image/avif", "image/webp"] },
+  // Every image is already a small WebP in /public: serve it straight from the CDN instead of through the on-demand optimiser
+  // (its first request per size is slow, and it asked for 3840px-wide versions on phones).
+  images: { unoptimized: true },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

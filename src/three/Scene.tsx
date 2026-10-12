@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Suspense, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { NeutralToneMapping } from "three";
 import { ContactShadows } from "@react-three/drei/core/ContactShadows";
 import { PerformanceMonitor } from "@react-three/drei/core/PerformanceMonitor";
@@ -11,17 +11,25 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { usePreferences } from "@/components/common/PreferencesProvider";
-import { CAMERA, MODEL_LITE_URL, MODEL_URL } from "./config";
+import { loadStore } from "@/lib/loadStore";
+import { CAMERA } from "./config";
 import { FarhanModel } from "./FarhanModel/FarhanModel";
 import { CameraRig } from "./CameraController/CameraRig";
 import { Lighting } from "./Environment/Lighting";
-import { ProgressReporter } from "./loaders/ProgressReporter";
+
+/** Mounted inside the same <Suspense> as the model, so it only exists once the model is loaded. After a few frames
+ *  (textures uploaded, shaders compiled — the heavy part) it tells the page the 3D is safe to fade in. */
+function FirstFrames() {
+  const n = useRef(0);
+  useFrame(() => { if (++n.current === 4) loadStore.set({ sceneVisible: true }); });
+  return null;
+}
 
 /**
  * R3F does not bridge React context into <Canvas>, so every preference is read here
  * and handed down as plain props.
  */
-export default function Scene({ active }: { active: boolean }) {
+export default function Scene({ active, url }: { active: boolean; url: string }) {
   const pointer = useMousePosition();
   const scroll = useHeroScroll();
   const reducedMotion = useReducedMotion();
@@ -29,8 +37,6 @@ export default function Scene({ active }: { active: boolean }) {
   const { isReduced } = usePerformanceMode();
   const { theme } = usePreferences();
 
-  // Full-quality model everywhere; the lighter file is only for performance mode.
-  const url = isReduced ? MODEL_LITE_URL : MODEL_URL;
   // Start sharp (2× supersampling, even on 1× laptop screens) and only step down — never below 1.25× — if the frame rate really drops.
   const [dpr, setDpr] = useState(2);
 
@@ -42,12 +48,17 @@ export default function Scene({ active }: { active: boolean }) {
         camera={{ fov: CAMERA.fov, position: [...CAMERA.desktop.position], near: 0.1, far: 50 }}
         gl={{ antialias: !isReduced, alpha: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping }}
         // Neutral tone-mapping keeps the model's true skin and fabric colours (the default ACES washed out the face).
-        onCreated={({ gl }) => { gl.toneMapping = NeutralToneMapping; gl.toneMappingExposure = 1; }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = NeutralToneMapping; gl.toneMappingExposure = 1;
+          // Phones can drop the GPU context under memory pressure: tell the page so it can fall back to the photo.
+          gl.domElement.addEventListener("webglcontextlost", (e) => { e.preventDefault(); window.dispatchEvent(new Event("scene-lost")); });
+        }}
         aria-label="Interactive 3D model of Muhammad Farhan. Drag to rotate."
       >
         <Suspense fallback={null}>
           <Lighting dark={theme === "dark"} reducedMotion={reducedMotion} />
           <FarhanModel url={url} pointer={pointer} scroll={scroll} isMobile={isMobile} reducedMotion={reducedMotion} />
+          <FirstFrames />
           {!isReduced && (
             <ContactShadows position={[0, 0.001, 0]} opacity={0.4} scale={5} blur={2.6} far={1.6} resolution={512} frames={1} />
           )}
@@ -55,7 +66,6 @@ export default function Scene({ active }: { active: boolean }) {
         {!isReduced && <PerformanceMonitor onChange={({ factor }) => setDpr(Math.round((1.25 + 0.75 * factor) * 20) / 20)} />}
         <CameraRig pointer={pointer} scroll={scroll} isMobile={isMobile} reducedMotion={reducedMotion} />
       </Canvas>
-      <ProgressReporter />
     </>
   );
 }

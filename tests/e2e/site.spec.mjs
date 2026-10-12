@@ -147,3 +147,31 @@ test("deep link /#contact lands on the contact section after loading", async ({ 
   const top = await page.evaluate(() => Math.abs(Math.round(document.getElementById("contact").getBoundingClientRect().top)));
   expect(top).toBeLessThan(220);
 });
+
+test("very slow JavaScript: the page reveals itself after a few seconds instead of staying on the loader", async ({ page }) => {
+  await page.route("**/_next/static/**/*.js", (route) => route.abort()); // JS never arrives
+  await page.goto("/", { waitUntil: "commit" });
+  await expect(page.locator("h1")).toBeVisible();
+  await page.waitForTimeout(4500); // 3 s give-up delay + 0.6 s fade
+  const loader = await page.evaluate(() => getComputedStyle(document.getElementById("loader")).visibility);
+  expect(loader).toBe("hidden");
+  await expect(page.locator("h1")).toBeInViewport();
+  await expect(page.locator('img[src*="farhan-poster"]')).toBeVisible();
+});
+
+test("glass blur really applies (the compiled CSS keeps backdrop-filter)", async ({ page }) => {
+  await openHome(page);
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await page.waitForTimeout(800);
+  const bf = await page.evaluate(() => getComputedStyle(document.querySelector("header nav")).backdropFilter);
+  expect(bf).toContain("blur");
+});
+
+test("images are served as static files, not through the slow on-demand optimiser", async ({ page }) => {
+  const urls = [];
+  page.on("request", (r) => { if (r.resourceType() === "image") urls.push(r.url()); });
+  await openHome(page);
+  await reveal(page, "work");
+  expect(urls.length).toBeGreaterThan(0);
+  expect(urls.filter((u) => u.includes("/_next/image"))).toEqual([]);
+});
