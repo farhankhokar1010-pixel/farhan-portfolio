@@ -74,7 +74,7 @@ export function About() {
               />
               <div aria-hidden className="absolute -inset-4 rounded-full border border-dashed border-accent/45" />
               <div className="absolute inset-[7%] overflow-hidden rounded-full bg-surface">
-                <Image src="/images/farhan-profile.webp" alt="Muhammad Farhan" fill sizes="520px" className="object-cover" />
+                <Image src="/images/farhan-profile.sm.webp" alt="Muhammad Farhan" fill sizes="520px" className="object-cover" />
               </div>
               <div className="glass absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-2" style={{ background: "var(--bg-elevated)" }}>
                 <span key={stage.index} className="label text-accent-text">{stage.index} · {stage.title}</span>

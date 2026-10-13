@@ -5,17 +5,20 @@ import { useSyncExternalStore } from "react";
  * 3D scene (lazy chunk) without importing three.js/drei into the main bundle.
  */
 export interface LoadState {
-  modelProgress: number; // 0–100, download progress of the 3D model (does NOT hold up the page)
+  codeDone: boolean;     // the 3D engine chunk has downloaded
+  modelProgress: number; // 0–100, download progress of the 3D model
   modelDone: boolean;    // model downloaded
   fontsDone: boolean;
-  posterDone: boolean;   // hero photo is on screen (this, with fonts, is all the loader waits for)
-  sceneVisible: boolean; // the 3D canvas has rendered its first frames and is fading in → camera intro starts
-  ready: boolean;        // loader has finished → hero text intro may start
+  posterDone: boolean;   // hero photo is on screen (only needed when 3D is skipped / unavailable)
+  threeSkipped: boolean; // 3D will not be shown (no WebGL, data-saver, failed): the photo is the hero and the loader stops waiting for 3D
+  sceneVisible: boolean; // the 3D canvas has drawn its first frames (off-screen, behind the loader) and is safe to show
+  forced: boolean;       // loader gave up waiting (very slow link): page shows now, 3D fades in when it arrives
+  ready: boolean;        // loader has finished → hero text + camera intro may start
   aiOpen: boolean;       // Ask Farhan panel is open
   ai: "idle" | "thinking" | "speaking"; // assistant activity → subtle character reaction
 }
 
-let state: LoadState = { modelProgress: 0, modelDone: false, fontsDone: false, posterDone: false, sceneVisible: false, ready: false, aiOpen: false, ai: "idle" };
+let state: LoadState = { codeDone: false, modelProgress: 0, modelDone: false, fontsDone: false, posterDone: false, threeSkipped: false, sceneVisible: false, forced: false, ready: false, aiOpen: false, ai: "idle" };
 const listeners = new Set<() => void>();
 
 export const loadStore = {

@@ -20,7 +20,12 @@ export default defineConfig({
   use: { baseURL, launchOptions, trace: "retain-on-failure" },
   webServer: process.env.BASE_URL ? undefined : { command: "npm run start", url: baseURL, reuseExistingServer: true, timeout: 120_000 },
   projects: [
-    { name: "desktop", testIgnore: /mobile\.spec/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, colorScheme: "dark" } },
+    { name: "desktop", testIgnore: /(mobile|webgl)\.spec/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, colorScheme: "dark" } },
+    {
+      name: "webgl",
+      testMatch: /webgl\.spec\.mjs/,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 700, height: 800 }, launchOptions: { ...launchOptions, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"] } },
+    },
     { name: "mobile", testMatch: /mobile\.spec\.mjs/, use: { ...devices["Pixel 7"], colorScheme: "dark" } },
   ],
 });

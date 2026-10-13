@@ -12,7 +12,8 @@ export function useIntro(reducedMotion: boolean, duration = 1.6) {
   return useCallback(
     (elapsed: number) => {
       if (reducedMotion) return 1;
-      if (!loadStore.get().sceneVisible) return 0;
+      const s = loadStore.get();
+    if (!(s.ready && s.sceneVisible)) return 0;
       if (start.current === null) start.current = elapsed;
       const k = Math.min(1, (elapsed - start.current) / duration);
       return 1 - Math.pow(1 - k, 4);

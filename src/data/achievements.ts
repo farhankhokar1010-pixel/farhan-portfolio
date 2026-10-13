@@ -16,6 +16,7 @@ export const achievements: Achievement[] = [
     verifyUrl: "https://actai.aiskillbridge.pk/v/RQN3FGT6D58TQK8F",
     image: {
       src: "/images/certificates/act-ai.webp",
+      thumb: { src: "/images/certificates/act-ai.sm.webp", width: 640, height: 452 },
       alt: "ACT AI Cycle 1 certificate of completion awarded to Muhammad Farhan",
       caption: "ACT AI — Certificate of Completion",
       width: 1400,
@@ -32,6 +33,7 @@ export const achievements: Achievement[] = [
     tags: ["IT Help Desk", "University IT", "Internship"],
     image: {
       src: "/images/certificates/internship-iub.webp",
+      thumb: { src: "/images/certificates/internship-iub.sm.webp", width: 560, height: 396 },
       alt: "Certificate of internship completion from the IUB Directorate of Information Technology",
       caption: "IUB Directorate of IT — Internship Certificate",
       width: 1400,
@@ -50,6 +52,7 @@ export const achievements: Achievement[] = [
     verifyUrl: "https://courses.cognitiveclass.ai/certificates/cc729db74a6a41b0a15436e5d874c204",
     image: {
       src: "/images/certificates/python-ibm.webp",
+      thumb: { src: "/images/certificates/python-ibm.sm.webp", width: 640, height: 458 },
       alt: "Cognitive Class Python 101 for Data Science certificate awarded to Muhammad Farhan",
       caption: "IBM / Cognitive Class — Python 101 for Data Science",
       width: 1400,

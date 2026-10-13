@@ -1,3 +1,13 @@
+# STATUS UPDATE 5 (model WITH the page, tiny assets) — newest, read first
+- Reverses update 4's "poster first" idea at Farhan's request: the page must appear WITH the 3D character, no photo-in-a-ring placeholder.
+- **Loader = real progress to 100%**: app 8 + fonts 7 + 3D code 20 + model download 55 + first frames drawn off-screen 10 (`Loader.tsx`, `loadStore`: codeDone/modelProgress/sceneVisible/threeSkipped/forced). HeroStage starts the model fetch + `import(Scene)` at hydration (no idle wait). Reveal happens only when `sceneVisible` (or `threeSkipped` + photo for no-WebGL/data-saver/failed; or `forced` after 45 s). Camera intro waits for `ready && sceneVisible`. Before JS arrives, CSS alone counts/crawls 0→8 (`@property --loader-n`); the give-up fade is only a 30 s safety net.
+- **Models:** `farhan-mobile.glb` 175 KB (11.7k tris, 1024/512 px textures) for ≤1023px / touch / downlink<2.5 Mbps / ≤4 GB RAM / 3g/2g/save-data / perf mode; `farhan.glb` 515 KB (47k tris, 2048 base) for desktop on a normal link. Built with `gltf-transform` weld+simplify(lockBorder)+texture resize+quantize+meshopt (script kept out of repo; ratio 0.10 err 0.01 base 1024 q72 other 512 for mobile; ratio 0.45 base 1536 other 1024 q82 → S2 is what shipped as desktop).
+- **Images ≤20 KB inline:** every large image has a `.sm.webp` thumb (`thumb` field on `ProjectScreen`; full size only in the lightbox). `NearImage` requests images only within 500 px of the viewport. smoke checks the 20 KB budget.
+- Tests: 47 smoke checks; 22 browser tests incl. `webgl.spec.mjs` (software WebGL: loader reaches 100%, canvas visible, no poster) and a no-WebGL fallback test.
+- At his 27–30 KB/s link the whole thing takes ~30 s (JS ~200 KB + 3D code ~283 KB + model 175 KB + fonts) — physics; loader shows honest progress. Remaining levers if wanted: trim the 283 KB three/r3f chunk, drop a font family.
+
+---
+
 # STATUS UPDATE 4 (slow-network + deployed-site fixes) — newest, read first
 - Live: https://farhan-portfolio-3d.vercel.app (also farhan-portfolio-ashy-nu.vercel.app → set `NEXT_PUBLIC_SITE_URL` to the one he shares, else canonical/OG point to the other).
 - **Page never waits for 3D now.** Loader = fonts (≤2.5 s) + 7 KB hero photo (`farhan-poster.webp`), hard cap 4.5 s. If JS itself is slow, CSS fades the SSR loader out after 3 s (`loader-giveup`) and `lib/ssrReveal.ts` stops Hero/Navbar/Loader from hiding + replaying the intro.

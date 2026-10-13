@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { NearImage } from "@/components/common/NearImage";
 import type { ProjectScreen } from "@/data/types";
 import { cn } from "@/lib/cn";
 
@@ -24,7 +24,7 @@ export function ScreenFrame({
         aria-label={`Enlarge screenshot: ${screen.caption}`}
         className="block w-full"
       >
-        <Image src={screen.src} alt={screen.alt} width={screen.width} height={screen.height} sizes={sizes} priority={priority} fetchPriority={priority ? "high" : "low"} className="h-auto w-full" />
+        <NearImage src={(screen.thumb ?? screen).src} alt={screen.alt} width={(screen.thumb ?? screen).width} height={(screen.thumb ?? screen).height} sizes={sizes} priority={priority} className="h-auto w-full" />
       </button>
     </figure>
   );

@@ -27,9 +27,9 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "Flask 3", "SQLAlchemy", "Flask-Login", "Flask-Migrate", "SQLite / PostgreSQL", "Jinja2", "WeasyPrint", "Vanilla JS & CSS"],
     screens: [
-      { src: "/images/projects/resume-nova/landing.webp", alt: "Resume Nova landing page with the headline 'Build a Resume That Gets Hired'", caption: "Landing page", width: 1600, height: 765 },
-      { src: "/images/projects/resume-nova/cover-letter.webp", alt: "Resume Nova cover letter editor with live PDF-style preview", caption: "Cover-letter editor with live preview", width: 1600, height: 763 },
-      { src: "/images/projects/resume-nova/admin-dashboard.webp", alt: "Resume Nova admin dashboard with usage metrics and template statistics", caption: "Admin dashboard", width: 1600, height: 763 },
+      { src: "/images/projects/resume-nova/landing.webp", thumb: { src: "/images/projects/resume-nova/landing.sm.webp", width: 960, height: 459 }, alt: "Resume Nova landing page with the headline 'Build a Resume That Gets Hired'", caption: "Landing page", width: 1600, height: 765 },
+      { src: "/images/projects/resume-nova/cover-letter.webp", thumb: { src: "/images/projects/resume-nova/cover-letter.sm.webp", width: 880, height: 420 }, alt: "Resume Nova cover letter editor with live PDF-style preview", caption: "Cover-letter editor with live preview", width: 1600, height: 763 },
+      { src: "/images/projects/resume-nova/admin-dashboard.webp", thumb: { src: "/images/projects/resume-nova/admin-dashboard.sm.webp", width: 960, height: 458 }, alt: "Resume Nova admin dashboard with usage metrics and template statistics", caption: "Admin dashboard", width: 1600, height: 763 },
     ],
     features: [
       { title: "Resume builder", items: ["Multiple resumes per user", "Dynamic sections: add, remove, enable, reorder", "Theme and font pairing per resume", "Debounced autosave", "Duplicate, rename, delete"] },
@@ -55,9 +55,9 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "Flask", "SQLite", "SQLAlchemy", "bcrypt", "Jinja2", "Vanilla JS & CSS"],
     screens: [
-      { src: "/images/projects/medimart/storefront.webp", alt: "MediMart public storefront with the headline 'Your Smart Online Pharmacy'", caption: "Public storefront", width: 1600, height: 768 },
-      { src: "/images/projects/medimart/admin-dashboard.webp", alt: "MediMart admin dashboard showing medicines, orders, revenue and staff counts", caption: "Admin dashboard", width: 1600, height: 752 },
-      { src: "/images/projects/medimart/order-receipt.webp", alt: "MediMart order receipt showing items, payment method and payment status", caption: "Order receipt", width: 1600, height: 771 },
+      { src: "/images/projects/medimart/storefront.webp", thumb: { src: "/images/projects/medimart/storefront.sm.webp", width: 960, height: 461 }, alt: "MediMart public storefront with the headline 'Your Smart Online Pharmacy'", caption: "Public storefront", width: 1600, height: 768 },
+      { src: "/images/projects/medimart/admin-dashboard.webp", thumb: { src: "/images/projects/medimart/admin-dashboard.sm.webp", width: 960, height: 451 }, alt: "MediMart admin dashboard showing medicines, orders, revenue and staff counts", caption: "Admin dashboard", width: 1600, height: 752 },
+      { src: "/images/projects/medimart/order-receipt.webp", thumb: { src: "/images/projects/medimart/order-receipt.sm.webp", width: 960, height: 463 }, alt: "MediMart order receipt showing items, payment method and payment status", caption: "Order receipt", width: 1600, height: 771 },
     ],
     features: [
       { title: "Security & access", items: ["bcrypt password hashing", "Lockout for 15 minutes after 5 failed logins", "Fixed Super Admin account that cannot be deleted", "Staff signup only after admin approval"] },
@@ -83,9 +83,9 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "Flask", "Server-Sent Events", "SQLite", "SQLAlchemy", "OpenCV", "MediaPipe", "rembg (U2Net)", "Pillow"],
     screens: [
-      { src: "/images/projects/passportai/upload.webp", alt: "PassportAI upload page with drag-and-drop area and processing pipeline list", caption: "Upload and pipeline overview", width: 1600, height: 756 },
-      { src: "/images/projects/passportai/result-dark.webp", alt: "PassportAI result page in dark mode showing pipeline images and final passport photo", caption: "Result page (dark)", width: 1600, height: 760 },
-      { src: "/images/projects/passportai/result-light.webp", alt: "PassportAI result page in light mode with download size options", caption: "Result page (light)", width: 1600, height: 756 },
+      { src: "/images/projects/passportai/upload.webp", thumb: { src: "/images/projects/passportai/upload.sm.webp", width: 960, height: 454 }, alt: "PassportAI upload page with drag-and-drop area and processing pipeline list", caption: "Upload and pipeline overview", width: 1600, height: 756 },
+      { src: "/images/projects/passportai/result-dark.webp", thumb: { src: "/images/projects/passportai/result-dark.sm.webp", width: 960, height: 456 }, alt: "PassportAI result page in dark mode showing pipeline images and final passport photo", caption: "Result page (dark)", width: 1600, height: 760 },
+      { src: "/images/projects/passportai/result-light.webp", thumb: { src: "/images/projects/passportai/result-light.sm.webp", width: 960, height: 454 }, alt: "PassportAI result page in light mode with download size options", caption: "Result page (light)", width: 1600, height: 756 },
     ],
     features: [
       { title: "Pipeline", items: ["Validation and database check", "Face detection (OpenCV Haar cascade)", "Pose analysis (MediaPipe FaceMesh)", "Geometric pose correction and framing", "Lighting: CLAHE and colour balance, with an optional PicsArt AI step", "Background removal (U2Net) with GrabCut fallback"] },

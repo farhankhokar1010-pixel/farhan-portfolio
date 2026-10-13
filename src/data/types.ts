@@ -20,6 +20,8 @@ export type ProjectStatus = "built" | "live" | "in-development";
 
 export interface ProjectScreen {
   src: string;
+  /** Small (≤20 KB) version shown inline; `src` (full size) is only fetched when the lightbox opens. */
+  thumb?: { src: string; width: number; height: number };
   alt: string;
   caption: string;
   width: number;

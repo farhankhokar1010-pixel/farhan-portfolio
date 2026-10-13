@@ -43,14 +43,14 @@ for (const [p, type] of [["/robots.txt", "text/plain"], ["/sitemap.xml", "xml"],
 const pdf = await get("/Muhammad_Farhan_Resume.pdf");
 const pdfHead = Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString();
 check("resume PDF is a real PDF", pdf.status === 200 && pdfHead === "%PDF-");
-for (const [m, maxKB] of [["/models/farhan.glb", 2500], ["/models/farhan-mobile.glb", 700]]) {
+for (const [m, maxKB] of [["/models/farhan.glb", 700], ["/models/farhan-mobile.glb", 250]]) {
   const r = await get(m);
   const buf = Buffer.from(await r.arrayBuffer());
   check(`${m} is a GLB`, r.status === 200 && buf.subarray(0, 4).toString() === "glTF", `status ${r.status}`);
   check(`${m} is under ${maxKB} KB (slow-network budget)`, buf.length / 1024 < maxKB, `${Math.round(buf.length / 1024)} KB`);
 }
 const poster = await get("/images/farhan-poster.webp");
-check("hero poster is tiny (< 40 KB)", poster.status === 200 && Buffer.from(await poster.arrayBuffer()).length < 40 * 1024);
+check("hero poster is tiny (< 20 KB)", poster.status === 200 && Buffer.from(await poster.arrayBuffer()).length < 20 * 1024);
 check("no /_next/image requests (images served straight from the CDN)", !html.includes("/_next/image"));
 check("no 3D model preload competing with the page", !/rel="preload"[^>]*\.glb/.test(html));
 check("page can reveal itself without JavaScript (loader give-up CSS)", /loader-giveup/.test(await (await get(html.match(/\/_next\/static\/[^"]+\.css/)[0])).text()));
@@ -96,6 +96,19 @@ if (envKey.length > 10) {
 } else console.log("  SKIP  no GROQ_API_KEY found locally to look for");
 
 // ---- content (run from the project root) ----
+console.log("\nImage budget (everything shown inline must be 20 KB or less)");
+{
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+  const imgDir = join(process.cwd(), "public", "images");
+  if (existsSync(imgDir)) {
+    const files = walk(imgDir).filter((f) => f.endsWith(".webp"));
+    // Full-size originals (no ".sm.") exist only for the lightbox; they must have a small sibling that is what the page shows.
+    const inline = files.filter((f) => f.includes(".sm.") || !existsSync(f.replace(/\.webp$/, ".sm.webp")));
+    const over = inline.filter((f) => statSync(f).size > 20 * 1024);
+    check(`all ${inline.length} inline images are <= 20 KB`, over.length === 0, over.map((f) => `${f.split("images")[1]} ${Math.round(statSync(f).size / 1024)}KB`).join(", "));
+  }
+}
+
 console.log("\nContent");
 const dataDir = join(process.cwd(), "src", "data");
 if (existsSync(dataDir) && statSync(dataDir).isDirectory()) {

@@ -9,7 +9,7 @@ import { usePerformanceMode } from "@/hooks/usePerformanceMode";
 import { isVerySlowConnection, shouldUseMobileModel } from "@/lib/device";
 import { MODEL_BYTES, MODEL_MOBILE_URL, MODEL_URL } from "@/three/config";
 
-// three.js stays out of the initial JS bundle, and is only requested once the page is already showing.
+// three.js stays out of the initial JS bundle (the page itself hydrates first), then loads in parallel with the model.
 const loadScene = () => import("@/three/Scene");
 const Scene = dynamic(loadScene, { ssr: false });
 
@@ -26,12 +26,13 @@ type Phase = "checking" | "nowebgl" | "waiting" | "manual" | "loading" | "ready"
 const mb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`;
 
 /**
- * Hero stage. The page never waits for 3D: the photo shows first, then — after the page is up — the model downloads in the
- * background (small file on phones / slow links), is drawn once off-screen to warm up the GPU, and only then fades in over the photo.
+ * Hero stage. The model starts downloading the moment the page hydrates (a small file on phones / slow links), the 3D code
+ * loads in parallel, and the scene is drawn a few frames off-screen — all BEHIND the loader, whose progress follows these steps —
+ * so the page is revealed with the character already there. The photo is only used when 3D is unavailable or failed.
  */
 export function HeroStage({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { ready, sceneVisible } = useLoadState();
+  const { sceneVisible } = useLoadState();
   const { isReduced } = usePerformanceMode();
   const [phase, setPhase] = useState<Phase>("checking");
   const [progress, setProgress] = useState(0);
@@ -63,7 +64,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
     const ctl = new AbortController();
     abort.current = ctl;
     try {
-      void loadScene(); // fetch the 3D code at the same time as the model
+      void loadScene().then(() => loadStore.set({ codeDone: true })); // 3D code downloads in parallel with the model
       const res = await fetch(url, { signal: ctl.signal });
       if (!res.ok || !res.body) throw new Error(`model ${res.status}`);
       const total = MODEL_BYTES[url] || Number(res.headers.get("content-length")) || 1;
@@ -79,6 +80,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
         if (pct !== last) { last = pct; setProgress(pct); loadStore.set({ modelProgress: pct }); }
       }
       await loadScene();
+      loadStore.set({ codeDone: true });
       const obj = URL.createObjectURL(new Blob(parts, { type: "model/gltf-binary" }));
       blobUrl.current = obj;
       loadStore.set({ modelProgress: 100, modelDone: true });
@@ -112,22 +114,20 @@ export function HeroStage({ className = "" }: { className?: string }) {
     return () => window.removeEventListener("scene-lost", lost);
   }, []);
 
-  // Once the page is showing: start the download when the browser is idle — or ask first on data-saver / 2G.
+  // Start straight away (the loader is waiting for exactly this) — except on data-saver / 2G, where we ask first.
   useEffect(() => {
-    if (phase !== "waiting" || !ready) return;
+    if (phase !== "waiting") return;
     if (isVerySlowConnection()) {
       setSize(mb(MODEL_BYTES[shouldUseMobileModel(isReduced) ? MODEL_MOBILE_URL : MODEL_URL]));
       setPhase("manual");
       return;
     }
-    const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => void start(), { timeout: 1500 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const t = window.setTimeout(() => void start(), 300);
-    return () => window.clearTimeout(t);
-  }, [phase, ready, start, isReduced]);
+    void start();
+  }, [phase, start, isReduced]);
+
+  // Tell the loader when 3D will not happen, so it stops waiting and the photo becomes the hero.
+  const skipped = phase === "nowebgl" || phase === "manual" || phase === "failed";
+  useEffect(() => { loadStore.set({ threeSkipped: skipped }); }, [skipped]);
 
   useEffect(() => () => {
     abort.current?.abort();
@@ -171,7 +171,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
         <span className="hero-light hero-light-b" />
       </div>
 
-      <HeroPoster hidden={sceneVisible} caption={caption} />
+      {skipped && <HeroPoster hidden={false} caption={caption} />}
 
       {phase === "ready" && modelUrl && (
         <StageBoundary key={attempt} onError={(e) => { console.warn("[3d] scene error:", e.message); setReason(e.message); setPhase("failed"); }} fallback={null}>

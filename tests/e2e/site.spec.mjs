@@ -148,15 +148,11 @@ test("deep link /#contact lands on the contact section after loading", async ({ 
   expect(top).toBeLessThan(220);
 });
 
-test("very slow JavaScript: the page reveals itself after a few seconds instead of staying on the loader", async ({ page }) => {
-  await page.route("**/_next/static/**/*.js", (route) => route.abort()); // JS never arrives
-  await page.goto("/", { waitUntil: "commit" });
-  await expect(page.locator("h1")).toBeVisible();
-  await page.waitForTimeout(4500); // 3 s give-up delay + 0.6 s fade
-  const loader = await page.evaluate(() => getComputedStyle(document.getElementById("loader")).visibility);
-  expect(loader).toBe("hidden");
-  await expect(page.locator("h1")).toBeInViewport();
+test("no WebGL: loader still completes and the photo is the hero (no endless wait)", async ({ page }) => {
+  await openHome(page); // this suite runs with WebGL switched off
   await expect(page.locator('img[src*="farhan-poster"]')).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("#loader")).toHaveCount(0);
 });
 
 test("glass blur really applies (the compiled CSS keeps backdrop-filter)", async ({ page }) => {

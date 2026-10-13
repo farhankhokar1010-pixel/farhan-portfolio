@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { NearImage } from "@/components/common/NearImage";
 import { achievements } from "@/data/achievements";
 import { Reveal } from "@/components/common/Reveal";
 import { SectionHeading } from "@/components/common/SectionHeading";
@@ -33,14 +33,12 @@ function Cards() {
                 aria-label={`View certificate: ${a.title}`}
                 className="relative block aspect-[7/5] bg-surface p-3"
               >
-                <Image
-                  src={a.image.src}
+                <NearImage
+                  src={(a.image.thumb ?? a.image).src}
                   alt={a.image.alt}
-                  width={a.image.width}
-                  height={a.image.height}
+                  width={(a.image.thumb ?? a.image).width}
+                  height={(a.image.thumb ?? a.image).height}
                   sizes="(min-width: 768px) 30vw, 90vw"
-                  unoptimized
-                  loading="lazy"
                   className="h-full w-full rounded-lg object-contain shadow-soft transition-transform duration-500 ease-cinematic group-hover:scale-[1.02]"
                 />
               </button>

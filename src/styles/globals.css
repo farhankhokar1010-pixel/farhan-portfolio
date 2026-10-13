@@ -136,12 +136,17 @@ html[data-perf="reduced"] body::before {
 
 /* Navbar glass: page content stays visible, blurred, behind it. Bottom hairline only. */
 /* Before JavaScript arrives the loader is static HTML: let its bar creep and pulse so it never looks frozen. */
-@keyframes loader-crawl { to { transform: scaleX(0.1); } }
+@property --loader-n { syntax: "<integer>"; initial-value: 0; inherits: false; }
+@keyframes loader-count { to { --loader-n: 8; } }
+html:not([data-loading]) #loader .loader-digits { animation: loader-count 8s ease-out forwards; counter-reset: loader-n var(--loader-n); }
+html:not([data-loading]) #loader .loader-digits::before { content: counter(loader-n); }
+html:not([data-loading]) #loader .loader-int { display: none; }
+@keyframes loader-crawl { to { transform: scaleX(0.08); } }
 @keyframes loader-pulse { 50% { opacity: 0.45; } }
-/* If JavaScript still has not started after 3 s, fade the loader away and let the static page (text, photo, rings) show. */
+/* Safety net only: if JavaScript has not started after 30 s (offline / blocked), fade the loader away and let the static page show. */
 @keyframes loader-giveup { to { opacity: 0; visibility: hidden; } }
-html:not([data-loading]) #loader { animation: loader-giveup 0.6s ease 3s forwards; }
-html:not([data-loading]) #loader .loader-bar { animation: loader-crawl 5s ease-out forwards, loader-pulse 1.2s ease-in-out infinite; }
+html:not([data-loading]) #loader { animation: loader-giveup 0.6s ease 30s forwards; }
+html:not([data-loading]) #loader .loader-bar { animation: loader-crawl 8s ease-out forwards, loader-pulse 1.2s ease-in-out infinite; }
 
 .nav-glass {
   background: color-mix(in srgb, var(--bg) 52%, transparent);
