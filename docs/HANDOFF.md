@@ -1,3 +1,11 @@
+# STATUS UPDATE 6 (one model for every device) — newest, read first
+- Farhan asked for the SAME model on phone and laptop and judged the 175 KB phone model (and the 515 KB laptop one) as bad-faced. Measured against the original 1.8 MB (face crop PSNR): phone 175 KB = 28 dB, laptop 515 KB = 36-37 dB, NEW 579 KB = 38.7 (laptop) / 40.0 (phone) dB.
+- Fix: `farhan.glb` is now built from the ORIGINAL with head-preserving simplification (vertices above 85% of height locked → face/hair keep all 22.9k triangles; body reduced to ~28k), 2048px base colour q82, 2048px normal q72, 512px MR; total 579 KB, 51k tris. Used on every device (`MODEL_URL` only; `farhan-mobile.glb` removed; `device.ts` model-tier helper now unused).
+- Build script (not in repo): gltf-transform dequantize+weld → meshopt `simplifyWithAttributes` with `vertex_lock` on the head → compactMesh → textureCompress → quantize+meshopt. Options built for comparison: A 452 KB, B 579 KB (shipped), C 750 KB.
+- Python IBM certificate now uses Farhan's cleaner image (`python-ibm.webp` 815x584 lightbox, `python-ibm.sm.webp` 700x502 19 KB inline).
+
+---
+
 # STATUS UPDATE 5 (model WITH the page, tiny assets) — newest, read first
 - Reverses update 4's "poster first" idea at Farhan's request: the page must appear WITH the 3D character, no photo-in-a-ring placeholder.
 - **Loader = real progress to 100%**: app 8 + fonts 7 + 3D code 20 + model download 55 + first frames drawn off-screen 10 (`Loader.tsx`, `loadStore`: codeDone/modelProgress/sceneVisible/threeSkipped/forced). HeroStage starts the model fetch + `import(Scene)` at hydration (no idle wait). Reveal happens only when `sceneVisible` (or `threeSkipped` + photo for no-WebGL/data-saver/failed; or `forced` after 45 s). Camera intro waits for `ready && sceneVisible`. Before JS arrives, CSS alone counts/crawls 0→8 (`@property --loader-n`); the give-up fade is only a 30 s safety net.

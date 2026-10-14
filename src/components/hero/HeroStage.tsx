@@ -5,9 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { StageBoundary } from "@/three/loaders/StageBoundary";
 import { HeroPoster } from "./HeroPoster";
 import { loadStore, useLoadState } from "@/lib/loadStore";
-import { usePerformanceMode } from "@/hooks/usePerformanceMode";
-import { isVerySlowConnection, shouldUseMobileModel } from "@/lib/device";
-import { MODEL_BYTES, MODEL_MOBILE_URL, MODEL_URL } from "@/three/config";
+import { isVerySlowConnection } from "@/lib/device";
+import { MODEL_BYTES, MODEL_URL } from "@/three/config";
 
 // three.js stays out of the initial JS bundle (the page itself hydrates first), then loads in parallel with the model.
 const loadScene = () => import("@/three/Scene");
@@ -33,7 +32,6 @@ const mb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`;
 export function HeroStage({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { sceneVisible } = useLoadState();
-  const { isReduced } = usePerformanceMode();
   const [phase, setPhase] = useState<Phase>("checking");
   const [progress, setProgress] = useState(0);
   const [modelUrl, setModelUrl] = useState<string | null>(null);
@@ -60,7 +58,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
     started.current = true;
     setPhase("loading");
     setProgress(0);
-    const url = shouldUseMobileModel(isReduced) ? MODEL_MOBILE_URL : MODEL_URL;
+    const url = MODEL_URL; // the same model on phone and laptop
     const ctl = new AbortController();
     abort.current = ctl;
     try {
@@ -94,7 +92,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
       setReason(msg);
       setPhase("failed");
     }
-  }, [isReduced]);
+  }, []);
 
   // Safety nets so the 3D can never silently be missing: a start that takes too long, or a lost GPU context, shows a clear message + retry.
   useEffect(() => {
@@ -118,12 +116,12 @@ export function HeroStage({ className = "" }: { className?: string }) {
   useEffect(() => {
     if (phase !== "waiting") return;
     if (isVerySlowConnection()) {
-      setSize(mb(MODEL_BYTES[shouldUseMobileModel(isReduced) ? MODEL_MOBILE_URL : MODEL_URL]));
+      setSize(mb(MODEL_BYTES[MODEL_URL]));
       setPhase("manual");
       return;
     }
     void start();
-  }, [phase, start, isReduced]);
+  }, [phase, start]);
 
   // Tell the loader when 3D will not happen, so it stops waiting and the photo becomes the hero.
   const skipped = phase === "nowebgl" || phase === "manual" || phase === "failed";

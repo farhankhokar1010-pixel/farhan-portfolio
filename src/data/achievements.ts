@@ -52,11 +52,11 @@ export const achievements: Achievement[] = [
     verifyUrl: "https://courses.cognitiveclass.ai/certificates/cc729db74a6a41b0a15436e5d874c204",
     image: {
       src: "/images/certificates/python-ibm.webp",
-      thumb: { src: "/images/certificates/python-ibm.sm.webp", width: 640, height: 458 },
+      thumb: { src: "/images/certificates/python-ibm.sm.webp", width: 700, height: 502 },
       alt: "Cognitive Class Python 101 for Data Science certificate awarded to Muhammad Farhan",
       caption: "IBM / Cognitive Class — Python 101 for Data Science",
-      width: 1400,
-      height: 1002,
+      width: 815,
+      height: 584,
     },
   },
 ];

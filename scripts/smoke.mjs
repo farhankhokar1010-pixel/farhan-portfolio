@@ -43,7 +43,7 @@ for (const [p, type] of [["/robots.txt", "text/plain"], ["/sitemap.xml", "xml"],
 const pdf = await get("/Muhammad_Farhan_Resume.pdf");
 const pdfHead = Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString();
 check("resume PDF is a real PDF", pdf.status === 200 && pdfHead === "%PDF-");
-for (const [m, maxKB] of [["/models/farhan.glb", 700], ["/models/farhan-mobile.glb", 250]]) {
+for (const [m, maxKB] of [["/models/farhan.glb", 700]]) {
   const r = await get(m);
   const buf = Buffer.from(await r.arrayBuffer());
   check(`${m} is a GLB`, r.status === 200 && buf.subarray(0, 4).toString() === "glTF", `status ${r.status}`);
