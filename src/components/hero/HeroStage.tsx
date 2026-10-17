@@ -31,7 +31,7 @@ const mb = (bytes: number) => `${(bytes / 1048576).toFixed(1)} MB`;
  */
 export function HeroStage({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { sceneVisible } = useLoadState();
+  const { sceneVisible, exiting } = useLoadState();
   const [phase, setPhase] = useState<Phase>("checking");
   const [progress, setProgress] = useState(0);
   const [modelUrl, setModelUrl] = useState<string | null>(null);
@@ -174,7 +174,7 @@ export function HeroStage({ className = "" }: { className?: string }) {
       {phase === "ready" && modelUrl && (
         <StageBoundary key={attempt} onError={(e) => { console.warn("[3d] scene error:", e.message); setReason(e.message); setPhase("failed"); }} fallback={null}>
           <div className="absolute inset-0 transition-opacity duration-700 ease-out" style={{ opacity: sceneVisible ? 1 : 0 }}>
-            <Scene active={visible} url={modelUrl} />
+            <Scene active={visible && !exiting} url={modelUrl} />
           </div>
         </StageBoundary>
       )}

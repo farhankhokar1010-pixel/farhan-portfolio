@@ -1,3 +1,8 @@
+# STATUS UPDATE 7 (smooth loader curtain on phones)
+- Loader exit now slides with `yPercent:-100` (compositor-only, `will-change: transform`) instead of animating `clip-path`, and `loadStore.exiting` pauses the WebGL loop (`Scene active={visible && !exiting}`) while the curtain runs. Measured on the harsh test rig (390px, 4x CPU, software WebGL): curtain 64 s / 0.2 fps -> 1.7 s / 38 fps.
+
+---
+
 # STATUS UPDATE 6 (one model for every device) — newest, read first
 - Farhan asked for the SAME model on phone and laptop and judged the 175 KB phone model (and the 515 KB laptop one) as bad-faced. Measured against the original 1.8 MB (face crop PSNR): phone 175 KB = 28 dB, laptop 515 KB = 36-37 dB, NEW 579 KB = 38.7 (laptop) / 40.0 (phone) dB.
 - Fix: `farhan.glb` is now built from the ORIGINAL with head-preserving simplification (vertices above 85% of height locked → face/hair keep all 22.9k triangles; body reduced to ~28k), 2048px base colour q82, 2048px normal q72, 512px MR; total 579 KB, 51k tris. Used on every device (`MODEL_URL` only; `farhan-mobile.glb` removed; `device.ts` model-tier helper now unused).

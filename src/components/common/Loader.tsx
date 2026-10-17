@@ -83,14 +83,15 @@ export function Loader() {
     const done = () => {
       document.documentElement.style.overflow = "";
       delete document.documentElement.dataset.loading;
-      loadStore.set({ ready: true });
+      loadStore.set({ exiting: false, ready: true });
       setVisible(false);
     };
     if (reduced) return done();
+    loadStore.set({ exiting: true }); // pause the WebGL loop: GPU + main thread are free for the curtain
     gsap
       .timeline({ delay: 0.35, onComplete: done })
       .to(root.current.querySelectorAll("[data-load-fade]"), { autoAlpha: 0, y: -16, duration: 0.45, stagger: 0.05, ease: "power2.in" })
-      .to(root.current, { clipPath: "inset(0 0 100% 0)", duration: 0.95, ease: "power4.inOut" }, "-=0.1");
+      .to(root.current, { yPercent: -100, duration: 0.9, ease: "power4.inOut", force3D: true }, "-=0.1"); // transform = compositor-only (clip-path repaints every frame)
   }
 
   if (!visible) return null;
@@ -103,8 +104,7 @@ export function Loader() {
       id="loader"
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[100] flex flex-col justify-between bg-bg p-6 sm:p-12"
-      style={{ clipPath: "inset(0 0 0% 0)" }}
+      className="fixed inset-0 z-[100] flex flex-col justify-between bg-bg p-6 will-change-transform sm:p-12"
     >
       <noscript><style>{"#loader{display:none!important}"}</style></noscript>
       <div data-load-fade className="flex items-start justify-between">
